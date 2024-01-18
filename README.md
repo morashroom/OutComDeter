@@ -1,7 +1,7 @@
 # OC-Hunter
 
 ## Datesets
-The dataset employed by OC-Hunter is a public open source datasets. We can get it from [here](./https://drive.google.com/drive/folders/1FKhZTQzkj-QpTdPE9f_L9Gn_pFP_EdBi)
+The dataset employed by OC-Hunter is a public open source datasets. We can get it from [here](https://drive.google.com/drive/folders/1FKhZTQzkj-QpTdPE9f_L9Gn_pFP_EdBi)
 
 ## Environmant Installation
 ```
