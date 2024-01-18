@@ -1,7 +1,7 @@
 # OC-Hunter:Co-Matching Attention Mechanisms for Just-In-Time Detection of Obsolete Comments in Software Development
 
 ## Datesets
-The dataset employed by OC-Hunter is a public open source datasets. We can get it from [here](https://drive.google.com/drive/folders/1FKhZTQzkj-QpTdPE9f_L9Gn_pFP_EdBi)
+The dataset employed by OC-Hunter is a public open source dataset. We can get it from [here](https://drive.google.com/drive/folders/1FKhZTQzkj-QpTdPE9f_L9Gn_pFP_EdBi)
 
 ## Environmant Installation
 ```
