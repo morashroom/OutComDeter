@@ -1,7 +1,7 @@
 # OC-Hunter:Co-Matching Attention Mechanisms for Just-In-Time Detection of Obsolete Comments in Software Development
 
 ## Introduction
-This replication package contains the dataset and code for our paper `OC-Hunter: Co-Matching Attention Mechanisms for Just-In-Time Detection of Obsolete Comments in Software Development`. The work is devoted to efficiently detecting obsolete comments in software development by capturing the complex semantic information between code and comments. The OC-Hunter consists of a Data Processing Component, a Feature Extraction Component, an Attention Component, and a Probability Calculation Component.
+This replication package contains the dataset and code for our paper `OC-Hunter: Co-Matching Attention Mechanisms for Just-In-Time Detection of Obsolete Comments in Software Development`. The work is devoted to efficiently detecting obsolete comments in software development by capturing the complex semantic information between code and comments. The OC-Hunter consists of a Data Processing Component, a Feature Extraction Component, an Attention Component, and a Probability Calculation Component. Here are the framework of OC-Hunter.
 
 <img width="678" alt="16e6f1998cb3b4df21a937631bce5e0" src="https://github.com/morashroom/OC-Hunter/assets/98865514/cbb4600c-f3fa-4d7f-9fa8-e5ae5fe1079e">
 
