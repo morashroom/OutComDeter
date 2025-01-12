@@ -8,7 +8,7 @@ This replication package contains the dataset and code for our paper `Just-In-Ti
 ## Core Repository Structure
 Here are the introduction of the core directories and files in OutComDeter. 
 * CodeBert: This directory contains the detailed information of the CodeBert model compared in RQ7 of "Just-In-Time Detection of Outdated Comments in Software Development by Jointly Reasoning".
-* CodeT5: This directory contains the detailed information of the CodeBert model compared in RQ7 of "Just-In-Time Detection of Outdated Comments in Software Development by Jointly Reasoning".
+* CodeT5: This directory contains the detailed information of the CodeT5 model compared in RQ7 of "Just-In-Time Detection of Outdated Comments in Software Development by Jointly Reasoning".
 * configs: This directory contains the train parameters of OutComDeter like epoch, batch size.
 * metrics: This directory contains the related files about evaluation metrics like Precision and Recall.
 * models: This directory contains OutComDeter architecture.
