@@ -27,6 +27,8 @@ def parse_callable(input_str):
     return globals()[input_str]
 
 
+
+
 def add_program_specific_args() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument('vocab_file', type=str,
@@ -35,13 +37,23 @@ def add_program_specific_args() -> ArgumentParser:
                         help="The train set used to build the vocabulary")
     parser.add_argument('--vocab-class', default=Vocab, type=parse_callable, choices=[Vocab, MixVocab],
                         help="Vocab class used to build the vocabulary")
-    parser.add_argument('--use-ft', action="store_true",
+    # configuration for fastText
+    parser.add_argument('--use-ft', action="store_true",default=False,
                         help="Build embeddings with fastText")
-    parser.add_argument('--ft-model', default="cc.en.300.bin", type=str,
+    # configuration for codeBert
+    parser.add_argument('--use-codebert', action="store_true",default=True,
+                        help="Build embeddings with CodeBERT")
+    # configuration for codet5
+    parser.add_argument('--use-codet5', action="store_true",default=True,
+                        help="Build embeddings with CodeT5")
+    parser.add_argument('--ft-model', default="cc.en.512.bin", type=str,
                         help="The path of fastText pre-trained model")
     parser.add_argument('--embedding-file', default="vocab_embeddings.pkl", type=str,
                         help="The file storing built embeddings")
+
     return parser
+
+
 
 
 class BaseVocabEntry(ABC):
@@ -164,12 +176,51 @@ class VocabEntry(BaseVocabEntry):
         print("{} words is not in pre-trained embeddings".format(non_count))
 
     def build_ft_embeddings(self, pretrained: fasttext.FastText._FastText):
-        embedding_list = []
+        embedding_list = []   
         for index in tqdm(range(len(self))):
             word = self.index2word(index)
             embedding_list.append(pretrained.get_word_vector(word))
         self.embeddings = np.vstack(embedding_list)
         assert self.embeddings.shape == (len(self), pretrained.get_dimension())
+    
+    # Construct the feature vectors of CodeBERT
+    def build_codebert_embeddings(self):
+        print("==========Now the model has started operations related to Bert encoding:==========")
+        # Load the CodeBERT model and Tokenizer
+        tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+        model = RobertaModel.from_pretrained("microsoft/codebert-base")
+
+        # Use CodeBERT to obtain embeddings for each token
+        embedding_list = []
+        for index in tqdm(range(len(self))):
+            word = self.index2word(index)
+            inputs = tokenizer(word, return_tensors="pt", truncation=True, max_length=512)
+            with torch.no_grad():
+                outputs = model(**inputs)
+                # Obtain the average pooling embedding of the last layer
+                embedding = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+                embedding_list.append(embedding)
+        self.embeddings = np.vstack(embedding_list)
+
+    # Construct the feature vectors of CodeT5
+    def build_codet5_embeddings(self):
+        print("==========Now the model has started operations related to CodeT5 encoding:==========")
+        # Load the CodeT5 model and Tokenizer
+        tokenizer = T5Tokenizer.from_pretrained("Salesforce/codet5-base")
+        model = T5EncoderModel.from_pretrained("Salesforce/codet5-base")
+
+        # Use CodeT5 to obtain embeddings for each word
+        embedding_list = []
+        for index in tqdm(range(len(self))):
+            word = self.index2word(index)
+            inputs = tokenizer(word, return_tensors="pt", truncation=True, max_length=512)
+            with torch.no_grad():
+                outputs = model(**inputs)
+                # Obtain the average pooling embedding of the last layer
+                embedding = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+                embedding_list.append(embedding)
+        self.embeddings = np.vstack(embedding_list)
+
 
     def build_glove_embeddings(self, pretrained: DataFrame):
         embedding_list = []
@@ -185,6 +236,7 @@ class VocabEntry(BaseVocabEntry):
                 non_count += 1
         self.embeddings = np.vstack(embedding_list)
         logging.info("{} words is not in pre-trained embeddings".format(non_count))
+
 
     def build_embeddings(self, pretrained: Union[fasttext.FastText._FastText, DataFrame]):
         """
@@ -297,6 +349,25 @@ class Vocab(BaseVocab):
         self.action.build_embeddings(pretrain_model)
         self.nl.build_embeddings(pretrain_model)
 
+    # Construct the feature embeddings of CodeBERT.
+    def build_codebert_embeddings(self):
+        print("Building CodeBERT embeddings for code vocabulary...")
+        self.code.build_codebert_embeddings()
+        print("Building CodeBERT embeddings for action vocabulary...")
+        self.action.build_codebert_embeddings()
+        print("Building CodeBERT embeddings for natural language vocabulary...")
+        self.nl.build_codebert_embeddings()
+
+    # Construct the feature embeddings of CodeT5.
+    def build_codet5_embeddings(self):
+        print("Building CodeT5 embeddings for code vocabulary...")
+        self.code.build_codet5_embeddings()
+        print("Building CodeT5 embeddings for action vocabulary...")
+        self.action.build_codet5_embeddings()
+        print("Building CodeT5 embeddings for natural language vocabulary...")
+        self.nl.build_codet5_embeddings()
+
+
     @staticmethod
     def build(dataset: "Union[Dataset, LargeDataset]", vocab_size: int, freq_cutoff: int) -> 'Vocab':
         print('initialize code vocabulary..')
@@ -388,6 +459,19 @@ class MixVocab(BaseVocab):
         self.token.build_embeddings(pretrain_model)
         self.action.build_embeddings(pretrain_model)
 
+    def build_codebert_embeddings(self):
+        print("Building CodeBERT embeddings for token vocabulary...")
+        self.token.build_codebert_embeddings()
+        print("Building CodeBERT embeddings for action vocabulary...")
+        self.action.build_codebert_embeddings()
+
+    def build_codet5_embeddings(self):
+        print("Building CodeT5 embeddings for token vocabulary...")
+        self.token.build_codet5_embeddings()
+        print("Building CodeT5 embeddings for action vocabulary...")
+        self.action.build_codet5_embeddings()
+
+
     def save(self, file_path: str):
         assert file_path.endswith(".json")
         with open(file_path, 'w') as f:
@@ -460,6 +544,7 @@ def main(raw_args=None):
     vocab.save(args.vocab_file)
     print('vocabulary saved to %s' % args.vocab_file)
 
+    # using Fasttext嵌入
     if bool(args.use_ft):
         model_path = os.path.expanduser(args.ft_model)
         print('Build pre-trained embeddings from {}'.format(model_path))
@@ -467,6 +552,19 @@ def main(raw_args=None):
         vocab.save_embeddings(args.embedding_file)
         print('vocabulary embeddings saved to {}'.format(args.embedding_file))
 
+    # using CodeBERT
+    if bool(args.use_codebert):
+        print("Build pre-trained embeddings using CodeBERT...")
+        vocab.build_codebert_embeddings()
+        vocab.save_embeddings(args.embedding_file)
+        print('vocabulary embeddings saved to {}'.format(args.embedding_file))
+
+    # using codeT5
+    if bool(args.use_codet5):
+        print("Build pre-trained embeddings using CodeT5...")
+        vocab.build_codet5_embeddings()
+        vocab.save_embeddings(args.embedding_file)
+        print('vocabulary embeddings saved to {}'.format(args.embedding_file))
 
 if __name__ == '__main__':
     main()
